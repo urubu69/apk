@@ -1,0 +1,38 @@
+# === SpotyLink Git Ignore ===
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.spec
+
+# Arquivos pesados e temporários
+downloads/
+covers/
+*.mp3
+*.m4a
+*.webm
+*.ogg
+*.opus
+*.wav
+*.flac
+*.rar
+
+# Ícones de sistema
+*.lnk
+Thumbs.db
+.DS_Store
+
+# Android build artifacts
+android-app/.gradle/
+android-app/app/build/
+android-app/build/
+android-app/local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/

@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#121212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>SpotyLink</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/static/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <style>
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+      --app-max-width: 560px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html {
+      background-color: #0A0A0A;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #121212;
+      color: #FFFFFF;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      padding-top: var(--sat);
+      padding-bottom: calc(88px + var(--sab));
+      padding-left: var(--sal);
+      padding-right: var(--sar);
+      max-width: var(--app-max-width);
+      margin: 0 auto;
+      position: relative;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    /* ========================================================
+       CABEÇALHO (HEADER RESPONSIVO)
+       ======================================================== */
+    header {
+      background: #000000;
+      padding: max(10px, var(--sat)) 16px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid #242424;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .btn-hamburger {
+      background: #181818;
+      border: 1px solid #2A2A2A;
+      color: #FFFFFF;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-hamburger:active {
+      background: #282828;
+      transform: scale(0.94);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 800;
+      color: #FFFFFF;
+      white-space: nowrap;
+    }
+    .logo img {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .btn-header-playlist {
+      background: #162619;
+      border: 1px solid #204025;
+      color: #1DB954;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      max-width: 150px;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .btn-header-playlist:active {
+      background: #1F3825;
+    }
+    .btn-header-playlist-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ========================================================
+       SEÇÃO ADICIONAR LINK (ENQUADRAMENTO DINÂMICO ANTI-OVERFLOW)
+       ======================================================== */
+    .add-section {
+      background: #181818;
+      margin: 12px 14px 10px;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid #262626;
+      box-sizing: border-box;
+      width: calc(100% - 28px);
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .add-title {
+      font-size: 11px;
+      color: #B3B3B3;
+      font-weight: 700;
+      margin-bottom: 9px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      letter-spacing: 0.5px;
+    }
+    .add-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .input-wrap {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      background: #101010;
+      border: 1px solid #282828;
+      border-radius: 22px;
+      padding: 0 6px 0 12px;
+      height: 42px;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .input-wrap:focus-within {
+      border-color: #1DB954;
+    }
+    .input-url {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #FFFFFF;
+      font-size: 13px;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .input-url::placeholder {
+      color: #666666;
+    }
+    .btn-paste-inside {
+      background: transparent;
+      border: none;
+      font-size: 15px;
+      padding: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.85;
+      flex-shrink: 0;
+    }
+    .btn-paste-inside:active {
+      transform: scale(0.9);
+      opacity: 1;
+    }
+    .btn-add {
+      flex-shrink: 0;
+      background: #1DB954;
+      color: #000000;
+      font-size: 13px;
+      font-weight: 800;
+      height: 42px;
+      padding: 0 16px;
+      border-radius: 22px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      box-sizing: border-box;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-add:active {
+      background: #1ed760;
+      transform: scale(0.97);
+    }
+    .btn-add:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .download-status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #1DB954;
+      display: none;
+      font-weight: 600;
+    }
+
+    /* ========================================================
+       BANNER DA PLAYLIST ATIVA
+       ======================================================== */
+    .active-pl-banner {
+      background: #161616;
+      margin: 0 14px 12px;
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1px solid #242424;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-sizing: border-box;
+      width: calc(100% - 28px);
+    }
+    .active-pl-left {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+      flex: 1;
+    }
+    .active-pl-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #222222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      flex-shrink: 0;
+      border: 1px solid #282828;
+    }
+    .active-pl-details {
+      min-width: 0;
+      flex: 1;
+    }
+    .active-pl-tag {
+      font-size: 10px;
+      color: #1DB954;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .active-pl-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .active-pl-sub {
+      font-size: 11px;
+      color: #999999;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .active-pl-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .btn-pl-action {
+      background: #242424;
+      border: 1px solid #333333;
+      color: #FFFFFF;
+      padding: 7px 11px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-pl-action:active {
+      background: #2E2E2E;
+    }
+    .btn-pl-del {
+      background: #261212;
+      border: 1px solid #3A1818;
+      color: #FF6B6B;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* ========================================================
+       BARRA LATERAL (DRAWER DE PLAYLISTS)
+       ======================================================== */
+    .sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.74);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.26s ease;
+    }
+    .sidebar-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sidebar-drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 300px;
+      max-width: 82vw;
+      background: #121212;
+      border-right: 1px solid #282828;
+      z-index: 210;
+      transform: translateX(-100%);
+      transition: transform 0.28s cubic-bezier(0.18, 0.9, 0.26, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 6px 0 28px rgba(0,0,0,0.7);
+      padding-top: var(--sat);
+      padding-bottom: var(--sab);
+    }
+    .sidebar-drawer.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-header {
+      background: #0A0A0A;
+      padding: 16px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #242424;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-logo {
+      width: 28px;
+      height: 28px;
+    }
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+    .sidebar-sub {
+      font-size: 11px;
+      color: #888888;
+    }
+    .btn-close-sidebar {
+      background: #1E1E1E;
+      border: 1px solid #2E2E2E;
+      color: #B3B3B3;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-close-sidebar:active {
+      color: #FFFFFF;
+      background: #2E2E2E;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sidebar-group-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #888888;
+      letter-spacing: 0.8px;
+      padding: 0 6px 6px;
+    }
+
+    .sidebar-pl-card {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      background: #181818;
+      border: 1px solid #242424;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .sidebar-pl-card:active {
+      background: #222222;
+    }
+    .sidebar-pl-card.active {
+      background: #1B2B1E;
+      border-color: #1DB954;
+    }
+    .sidebar-pl-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #242424;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .sidebar-pl-card.active .sidebar-pl-icon {
+      background: #1DB954;
+      color: #000000;
+    }
+    .sidebar-pl-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .sidebar-pl-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-pl-card.active .sidebar-pl-name {
+      color: #1DB954;
+    }
+    .sidebar-pl-count {
+      font-size: 11px;
+      color: #888888;
+    }
+    .sidebar-pl-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .btn-pl-mini-action {
+      background: transparent;
+      border: none;
+      color: #888888;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-pl-mini-action:active {
+      background: #333333;
+      color: #FFFFFF;
+    }
+    .sidebar-active-dot {
+      color: #1DB954;
+      font-size: 14px;
+      font-weight: bold;
+      padding-right: 2px;
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: #222222;
+      margin: 2px 4px;
+    }
+
+    .sidebar-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px 6px;
+    }
+    .btn-sidebar-new {
+      background: #1DB954;
+      color: #000000;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn-sidebar-new:active {
+      background: #1ed760;
+    }
+
+    .sidebar-custom-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* ========================================================
+       LISTA DE MÚSICAS
+       ======================================================== */
+    .track-list {
+      padding: 0 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .track-item {
+      display: flex;
+      align-items: center;
+      background: #181818;
+      border-radius: 10px;
+      padding: 8px 10px;
+      gap: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .track-item:active {
+      background: #242424;
+    }
+    .track-item.playing {
+      background: #202A21;
+      border-left: 3px solid #1DB954;
+    }
+    .track-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #282828;
+      flex-shrink: 0;
+    }
+    .track-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .track-title {
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #FFFFFF;
+    }
+    .track-item.playing .track-title {
+      color: #1DB954;
+    }
+    .track-artist {
+      font-size: 12px;
+      color: #B3B3B3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: #B3B3B3;
+      font-size: 16px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .btn-icon:active {
+      color: #FFFFFF;
+      background: #282828;
+    }
+
+    /* ========================================================
+       PLAYER INFERIOR (MINI-PLAYER FIXO ADAPTADO PARA NOTCH/NAVBAR)
+       ======================================================== */
+    .player-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: var(--app-max-width);
+      background: #181818;
+      border-top: 1px solid #282828;
+      height: calc(72px + var(--sab));
+      padding: 0 14px var(--sab);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+      box-shadow: 0 -4px 18px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+    }
+    .mini-cover {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #282828;
+      flex-shrink: 0;
+    }
+    .mini-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .mini-title {
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mini-artist {
+      font-size: 11px;
+      color: #B3B3B3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mini-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .btn-play-mini {
+      background: #1DB954;
+      border: none;
+      color: #000000;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .btn-play-mini:active {
+      background: #1ed760;
+    }
+
+    .mini-progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #333333;
+    }
+    .mini-progress-fill {
+      height: 100%;
+      background: #1DB954;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    /* Modal Adicionar à Playlist */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.78);
+      z-index: 250;
+      align-items: flex-end;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-card {
+      background: #1C1C1C;
+      width: 100%;
+      max-width: var(--app-max-width);
+      margin: 0 auto;
+      border-radius: 18px 18px 0 0;
+      padding: 18px 16px calc(20px + var(--sab));
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid #333333;
+      box-sizing: border-box;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-pl-list {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .modal-pl-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #262626;
+      padding: 10px 14px;
+      border-radius: 10px;
+    }
+    .btn-modal-add {
+      background: #1DB954;
+      color: #000;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-modal-add.added {
+      background: #3D3D3D;
+      color: #FFF;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 34px 16px;
+      color: #888888;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ========================================================
+       MEDIA QUERIES DE ENQUADRAMENTO RESPONSIVO (TODAS AS RESOLUÇÕES)
+       ======================================================== */
+
+    /* 1. Telas Ultra-Compactas (ex: 320px - 360px) */
+    @media (max-width: 360px) {
+      header {
+        padding: max(8px, var(--sat)) 10px 8px;
+      }
+      .logo {
+        font-size: 16px;
+      }
+      .logo img {
+        width: 20px;
+        height: 20px;
+      }
+      .btn-hamburger {
+        width: 34px;
+        height: 34px;
+        font-size: 17px;
+      }
+      .btn-header-playlist {
+        padding: 4px 8px;
+        font-size: 10px;
+        max-width: 105px;
+      }
+
+      .add-section {
+        margin: 8px 10px 8px;
+        padding: 10px 10px;
+        width: calc(100% - 20px);
+      }
+      .add-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .input-wrap {
+        height: 38px;
+        padding: 0 6px 0 10px;
+      }
+      .input-url {
+        font-size: 12px;
+      }
+      .btn-add {
+        width: 100%;
+        height: 36px;
+        font-size: 12px;
+      }
+
+      .active-pl-banner {
+        margin: 0 10px 10px;
+        padding: 9px 10px;
+        width: calc(100% - 20px);
+      }
+      .active-pl-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+      }
+      .active-pl-title {
+        font-size: 13px;
+      }
+      .active-pl-sub {
+        font-size: 10px;
+      }
+      .btn-pl-action {
+        padding: 5px 8px;
+        font-size: 10px;
+      }
+
+      .track-list {
+        padding: 0 10px;
+        gap: 5px;
+      }
+      .track-thumb {
+        width: 38px;
+        height: 38px;
+      }
+      .track-title {
+        font-size: 13px;
+      }
+      .track-artist {
+        font-size: 11px;
+      }
+      .btn-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+      }
+
+      .player-bar {
+        padding: 0 10px var(--sab);
+        gap: 8px;
+        height: calc(66px + var(--sab));
+      }
+      .mini-cover {
+        width: 40px;
+        height: 40px;
+      }
+      .mini-title {
+        font-size: 12px;
+      }
+      .mini-artist {
+        font-size: 10px;
+      }
+      .mini-controls {
+        gap: 4px;
+      }
+      .btn-play-mini {
+        width: 34px;
+        height: 34px;
+        font-size: 15px;
+      }
+    }
+
+    /* 2. Telas Estreitas / Padrão Inicial (361px a 390px) */
+    @media (min-width: 361px) and (max-width: 390px) {
+      .add-section {
+        margin: 10px 12px 10px;
+        padding: 12px 12px;
+        width: calc(100% - 24px);
+      }
+      .active-pl-banner {
+        margin: 0 12px 10px;
+        padding: 10px 12px;
+        width: calc(100% - 24px);
+      }
+      .track-list {
+        padding: 0 12px;
+      }
+      .btn-add {
+        padding: 0 13px;
+        font-size: 12px;
+      }
+    }
+
+    /* 3. Modo Paisagem em Celulares (Landscape curto) */
+    @media (max-height: 540px) and (orientation: landscape) {
+      body {
+        padding-bottom: calc(68px + var(--sab));
+      }
+      header {
+        padding: max(6px, var(--sat)) 14px 6px;
+      }
+      .add-section {
+        margin: 8px 14px;
+        padding: 8px 12px;
+      }
+      .player-bar {
+        height: calc(56px + var(--sab));
+        padding: 0 14px var(--sab);
+      }
+      .mini-cover {
+        width: 38px;
+        height: 38px;
+      }
+      .btn-play-mini {
+        width: 34px;
+        height: 34px;
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topo com Botão de Abrir Barra Lateral -->
+  <header>
+    <div class="header-left">
+      <button class="btn-hamburger" id="btnOpenSidebar" onclick="toggleSidebar(true)" aria-label="Abrir Playlists">
+        ☰
+      </button>
+      <div class="logo">
+        <img src="/static/icon-192.png" alt="SpotyLink">
+        <span>SpotyLink</span>
+      </div>
+    </div>
+    <button class="btn-header-playlist" onclick="toggleSidebar(true)" title="Trocar Playlist">
+      <span>📁</span>
+      <span class="btn-header-playlist-name" id="headerPlName">Downloads</span>
+    </button>
+  </header>
+
+  <!-- Campo de Inserir Link (Perfeitamente Enquadrado em qualquer resolução) -->
+  <section class="add-section">
+    <div class="add-title">
+      <span>ADICIONAR MÚSICA POR LINK</span>
+      <span style="color:#1DB954">Salva em Downloads</span>
+    </div>
+    <div class="add-row">
+      <div class="input-wrap">
+        <input type="text" id="inputUrl" class="input-url" placeholder="Cole o link ou pesquise o nome da música..." onkeydown="if(event.key==='Enter') startDownload()">
+        <button type="button" class="btn-paste-inside" onclick="pasteClipboard()" title="Colar">📋</button>
+      </div>
+      <button type="button" class="btn-add" id="btnAdd" onclick="startDownload()">＋ Adicionar</button>
+    </div>
+    <div id="downloadStatus" class="download-status">Baixando música...</div>
+  </section>
+
+  <!-- Banner da Playlist Ativa (Substitui visualmente a tela com a playlist selecionada) -->
+  <div class="active-pl-banner" id="activePlBanner">
+    <div class="active-pl-left">
+      <div class="active-pl-icon" id="bannerPlIcon">📥</div>
+      <div class="active-pl-details">
+        <div class="active-pl-tag">PLAYLIST EM EXIBIÇÃO:</div>
+        <div class="active-pl-title" id="bannerPlTitle">Downloads</div>
+        <div class="active-pl-sub" id="bannerPlSub">Todas as músicas salvas no celular</div>
+      </div>
+    </div>
+    <div class="active-pl-right">
+      <button class="btn-pl-action" onclick="toggleSidebar(true)">
+        <span>☰ Playlists</span>
+      </button>
+      <button class="btn-pl-del" id="btnDeleteActivePl" onclick="deleteCurrentActivePlaylist()" title="Excluir Playlist" style="display:none">
+        🗑
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de Músicas da Playlist Selecionada -->
+  <main class="track-list" id="trackList">
+    <div class="empty-state">Carregando músicas...</div>
+  </main>
+
+  <!-- Barra Lateral Deslizante (Sidebar Drawer de Playlists) -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+  <aside class="sidebar-drawer" id="sidebarDrawer">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="/static/icon-192.png" alt="Logo" class="sidebar-logo">
+        <div>
+          <div class="sidebar-title">Sua Biblioteca</div>
+          <div class="sidebar-sub">Selecione uma playlist</div>
+        </div>
+      </div>
+      <button class="btn-close-sidebar" onclick="toggleSidebar(false)">✕</button>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- Playlist Fixa de Downloads -->
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">PLAYLIST PADRÃO</div>
+        <div class="sidebar-pl-card active" id="sidebarCardDownloads" onclick="selectPlaylist('downloads')">
+          <div class="sidebar-pl-icon">📥</div>
+          <div class="sidebar-pl-info">
+            <div class="sidebar-pl-name">Downloads</div>
+            <div class="sidebar-pl-count" id="sidebarCountDownloads">0 músicas</div>
+          </div>
+          <div class="sidebar-active-dot" id="dotDownloads">●</div>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Playlists Criadas pelo Usuário -->
+      <div class="sidebar-group">
+        <div class="sidebar-section-header">
+          <span class="sidebar-group-title">PLAYLISTS CRIADAS</span>
+          <button class="btn-sidebar-new" onclick="promptCreatePlaylist()">＋ Nova</button>
+        </div>
+        <div class="sidebar-custom-list" id="sidebarCustomList">
+          <!-- Inserido dinamicamente pelo JS -->
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Player Inferior Fixo -->
+  <div class="player-bar">
+    <div class="mini-progress-bar">
+      <div class="mini-progress-fill" id="progressFill"></div>
+    </div>
+    <img src="/static/icon-192.png" class="mini-cover" id="playerCover" alt="Cover">
+    <div class="mini-info" id="playerInfo">
+      <div class="mini-title" id="playerTitle">Nenhuma música tocando</div>
+      <div class="mini-artist" id="playerArtist">Selecione uma faixa acima</div>
+    </div>
+    <div class="mini-controls">
+      <button class="btn-icon" onclick="playPrev()">⏮</button>
+      <button class="btn-play-mini" id="btnPlayPause" onclick="togglePlayPause()">▶</button>
+      <button class="btn-icon" onclick="playNext()">⏭</button>
+    </div>
+  </div>
+
+  <!-- Tag de Áudio HTML5 -->
+  <audio id="audioElement" preload="auto"></audio>
+
+  <!-- Modal Adicionar à Playlist -->
+  <div class="modal-backdrop" id="modalPlaylist">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>Adicionar à Playlist</span>
+        <button class="btn-close-sidebar" style="width:28px; height:28px" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-pl-list" id="modalPlList"></div>
+      <button class="btn-action" style="background:#282828; border:none; color:#FFF; padding:12px; border-radius:12px; width:100%; font-weight:700" onclick="closeModal()">Concluir</button>
+    </div>
+  </div>
+
+  <script>
+    // Registro do Service Worker para PWA (Instalação no Android)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    }
+
+    let state = { tracks: [], playlists: [] };
+    let currentPlaylistId = 'downloads';
+    let currentTrack = null;
+    let currentTrackIndex = -1;
+    let selectedTrackForModal = null;
+
+    const audio = document.getElementById('audioElement');
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const progressFill = document.getElementById('progressFill');
+
+    // Abre e fecha a Barra Lateral
+    function toggleSidebar(open) {
+      const drawer = document.getElementById('sidebarDrawer');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (open) {
+        drawer.classList.add('open');
+        backdrop.classList.add('open');
+      } else {
+        drawer.classList.remove('open');
+        backdrop.classList.remove('open');
+      }
+    }
+
+    // Carrega dados do backend
+    async function fetchState() {
+      try {
+        const res = await fetch('/api/state');
+        state = await res.json();
+        renderSidebar();
+        renderActivePlaylistBanner();
+        renderTracks();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Renderiza a Barra Lateral com todas as playlists
+    function renderSidebar() {
+      // 1. Atualiza Downloads
+      const dlPl = state.playlists.find(p => p.id === 'downloads') || { track_ids: [] };
+      const dlCount = dlPl.track_ids ? dlPl.track_ids.length : 0;
+      document.getElementById('sidebarCountDownloads').textContent = `${dlCount} música${dlCount === 1 ? '' : 's'}`;
+
+      const cardDl = document.getElementById('sidebarCardDownloads');
+      const dotDl = document.getElementById('dotDownloads');
+      if (currentPlaylistId === 'downloads') {
+        cardDl.classList.add('active');
+        dotDl.style.display = 'block';
+      } else {
+        cardDl.classList.remove('active');
+        dotDl.style.display = 'none';
+      }
+
+      // 2. Atualiza Playlists Criadas
+      const customList = document.getElementById('sidebarCustomList');
+      const customPls = state.playlists.filter(p => !p.is_system);
+
+      if (customPls.length === 0) {
+        customList.innerHTML = `
+          <div style="color:#777; font-size:12px; padding:12px 6px; text-align:center;">
+            Nenhuma playlist criada ainda.<br>Toque em <b>＋ Nova</b> acima!
+          </div>
+        `;
+        return;
+      }
+
+      customList.innerHTML = customPls.map(pl => {
+        const isActive = pl.id === currentPlaylistId;
+        const count = pl.track_ids ? pl.track_ids.length : 0;
+        return `
+          <div class="sidebar-pl-card ${isActive ? 'active' : ''}" onclick="selectPlaylist('${pl.id}')">
+            <div class="sidebar-pl-icon">🎵</div>
+            <div class="sidebar-pl-info">
+              <div class="sidebar-pl-name">${pl.name}</div>
+              <div class="sidebar-pl-count">${count} música${count === 1 ? '' : 's'}</div>
+            </div>
+            ${isActive ? '<div class="sidebar-active-dot">●</div>' : ''}
+            <div class="sidebar-pl-actions" onclick="event.stopPropagation()">
+              <button class="btn-pl-mini-action" onclick="promptRenamePlaylist('${pl.id}', '${pl.name}')" title="Renomear">✏️</button>
+              <button class="btn-pl-mini-action" onclick="confirmDeletePlaylist('${pl.id}', '${pl.name}')" title="Excluir">🗑</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Seleciona uma playlist pela barra lateral e substitui a tela
+    function selectPlaylist(plId) {
+      currentPlaylistId = plId;
+      toggleSidebar(false); // Fecha a barra lateral suavemente
+      renderSidebar();
+      renderActivePlaylistBanner();
+      renderTracks();
+    }
+
+    // Atualiza o Banner da Playlist Ativa na tela inicial
+    function renderActivePlaylistBanner() {
+      const pl = state.playlists.find(p => p.id === currentPlaylistId);
+      const headerTag = document.getElementById('headerPlName');
+      const bannerIcon = document.getElementById('bannerPlIcon');
+      const bannerTitle = document.getElementById('bannerPlTitle');
+      const bannerSub = document.getElementById('bannerPlSub');
+      const btnDel = document.getElementById('btnDeleteActivePl');
+
+      if (!pl) return;
+
+      headerTag.textContent = pl.name;
+      bannerTitle.textContent = pl.name;
+
+      const count = pl.track_ids ? pl.track_ids.length : 0;
+      bannerSub.textContent = `${count} música${count === 1 ? '' : 's'} nesta playlist`;
+
+      if (pl.id === 'downloads') {
+        bannerIcon.textContent = '📥';
+        btnDel.style.display = 'none'; // Downloads não pode ser excluída
+      } else {
+        bannerIcon.textContent = '🎵';
+        btnDel.style.display = 'flex'; // Playlists personalizadas podem ser excluídas
+      }
+    }
+
+    function getTracksForCurrentPlaylist() {
+      const pl = state.playlists.find(p => p.id === currentPlaylistId);
+      if (!pl) return [];
+      const trackMap = {};
+      state.tracks.forEach(t => trackMap[t.id] = t);
+      return (pl.track_ids || []).map(id => trackMap[id]).filter(Boolean);
+    }
+
+    // Renderiza a lista de músicas da playlist ativa
+    function renderTracks() {
+      const listEl = document.getElementById('trackList');
+      const tracks = getTracksForCurrentPlaylist();
+      const currentPl = state.playlists.find(p => p.id === currentPlaylistId);
+
+      if (tracks.length === 0) {
+        if (currentPlaylistId === 'downloads') {
+          listEl.innerHTML = `<div class="empty-state">Sua biblioteca de downloads está vazia.<br>Cole o link de uma música acima para baixar!</div>`;
+        } else {
+          listEl.innerHTML = `
+            <div class="empty-state">
+              A playlist <b>"${currentPl ? currentPl.name : ''}"</b> está vazia.<br><br>
+              Para adicionar músicas a esta playlist:<br>
+              1. Selecione a playlist <b>Downloads</b> na barra lateral.<br>
+              2. Toque no botão <b>➕</b> ao lado da música desejada!
+            </div>
+          `;
+        }
+        return;
+      }
+
+      listEl.innerHTML = tracks.map((t, idx) => {
+        const isPlaying = currentTrack && currentTrack.id === t.id && !audio.paused;
+        const coverSrc = t.cover_path ? `/api/cover/${t.id}` : '/static/icon-192.png';
+        return `
+          <div class="track-item ${isPlaying ? 'playing' : ''}" onclick="playTrackByIndex(${idx})">
+            <img src="${coverSrc}" class="track-thumb" alt="cover">
+            <div class="track-info">
+              <div class="track-title">${t.title}</div>
+              <div class="track-artist">${t.artist || 'Artista'} • ${t.duration_str || '00:00'}</div>
+            </div>
+            <div class="track-actions" onclick="event.stopPropagation()">
+              <button class="btn-icon" onclick="openPlaylistModal('${t.id}')" title="Gerenciar em playlists">➕</button>
+              <button class="btn-icon" onclick="removeTrack('${t.id}')" title="Remover">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Reprodução
+    function playTrackByIndex(idx) {
+      const tracks = getTracksForCurrentPlaylist();
+      if (idx < 0 || idx >= tracks.length) return;
+
+      currentTrackIndex = idx;
+      currentTrack = tracks[idx];
+
+      audio.src = `/api/audio/${currentTrack.id}`;
+      audio.play();
+
+      document.getElementById('playerTitle').textContent = currentTrack.title;
+      document.getElementById('playerArtist').textContent = currentTrack.artist || 'SpotyLink';
+      document.getElementById('playerCover').src = currentTrack.cover_path ? `/api/cover/${currentTrack.id}` : '/static/icon-192.png';
+      btnPlayPause.textContent = '⏸';
+
+      // Atualiza MediaSession (Som automotivo, volante, Bluetooth e tela de bloqueio)
+      if ('mediaSession' in navigator) {
+        const coverUrl = currentTrack.cover_path ? `/api/cover/${currentTrack.id}` : '/static/icon-192.png';
+        const plName = (state && state.playlists) ? ((state.playlists.find(p => p.id === currentPlaylistId) || {}).name || 'SpotyLink') : 'SpotyLink';
+
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: currentTrack.title,
+          artist: currentTrack.artist || 'SpotyLink',
+          album: plName,
+          artwork: [
+            { src: coverUrl, sizes: '96x96', type: 'image/png' },
+            { src: coverUrl, sizes: '128x128', type: 'image/png' },
+            { src: coverUrl, sizes: '192x192', type: 'image/png' },
+            { src: coverUrl, sizes: '256x256', type: 'image/png' },
+            { src: coverUrl, sizes: '512x512', type: 'image/png' }
+          ]
+        });
+
+        const setAction = (action, handler) => {
+          try { navigator.mediaSession.setActionHandler(action, handler); } catch (e) {}
+        };
+
+        setAction('play', () => audio.play());
+        setAction('pause', () => audio.pause());
+        setAction('previoustrack', playPrev);
+        setAction('nexttrack', playNext);
+        setAction('seekto', (details) => {
+          if (details.seekTime !== null && details.seekTime !== undefined) {
+            audio.currentTime = details.seekTime;
+            updateMediaPosition();
+          }
+        });
+        setAction('seekforward', (details) => {
+          audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration);
+          updateMediaPosition();
+        });
+        setAction('seekbackward', (details) => {
+          audio.currentTime = Math.max(audio.currentTime - (details.seekOffset || 10), 0);
+          updateMediaPosition();
+        });
+        setAction('stop', () => {
+          audio.pause();
+          audio.currentTime = 0;
+          updateMediaPosition();
+        });
+      }
+
+      renderTracks();
+    }
+
+    function updateMediaPosition() {
+      if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession && audio.duration && !isNaN(audio.duration)) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: audio.duration,
+            playbackRate: audio.playbackRate || 1.0,
+            position: audio.currentTime || 0
+          });
+        } catch (e) {}
+      }
+    }
+
+    function togglePlayPause() {
+      if (!currentTrack) {
+        playTrackByIndex(0);
+        return;
+      }
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
+    }
+
+    function playNext() {
+      const tracks = getTracksForCurrentPlaylist();
+      if (!tracks.length) return;
+      playTrackByIndex((currentTrackIndex + 1) % tracks.length);
+    }
+
+    function playPrev() {
+      const tracks = getTracksForCurrentPlaylist();
+      if (!tracks.length) return;
+      playTrackByIndex((currentTrackIndex - 1 + tracks.length) % tracks.length);
+    }
+
+    audio.addEventListener('play', () => {
+      btnPlayPause.textContent = '⏸';
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+      updateMediaPosition();
+      renderTracks();
+    });
+
+    audio.addEventListener('pause', () => {
+      btnPlayPause.textContent = '▶';
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      updateMediaPosition();
+      renderTracks();
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      if (audio.duration) {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        progressFill.style.width = pct + '%';
+        if (Math.floor(audio.currentTime) % 5 === 0) {
+          updateMediaPosition();
+        }
+      }
+    });
+
+    audio.addEventListener('seeked', updateMediaPosition);
+    audio.addEventListener('durationchange', updateMediaPosition);
+    audio.addEventListener('ended', playNext);
+
+    // Download via Link ou Pesquisa
+    async function startDownload() {
+      const urlInput = document.getElementById('inputUrl');
+      const url = urlInput.value.trim();
+      if (!url) return;
+
+      const btn = document.getElementById('btnAdd');
+      const status = document.getElementById('downloadStatus');
+
+      btn.disabled = true;
+      btn.textContent = 'Baixando...';
+      status.style.display = 'block';
+      status.style.color = '#1DB954';
+      status.textContent = 'Conectando e baixando música...';
+
+      try {
+        const res = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        const data = await res.json();
+        if (data.success) {
+          urlInput.value = '';
+          status.style.color = '#1DB954';
+          status.textContent = '✓ Música salva em Downloads!';
+          setTimeout(() => status.style.display = 'none', 3500);
+          await fetchState();
+        } else {
+          status.style.color = '#FF6B6B';
+          status.textContent = 'Erro: ' + (data.error || 'Link inválido');
+          alert('Erro no download: ' + (data.error || 'Link inválido'));
+        }
+      } catch (err) {
+        status.style.color = '#FF6B6B';
+        status.textContent = 'Erro de conexão com o servidor.';
+        alert('Erro ao conectar ao servidor.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '＋ Adicionar';
+      }
+    }
+
+    async function pasteClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) document.getElementById('inputUrl').value = text;
+      } catch (e) {
+        const input = document.getElementById('inputUrl');
+        input.focus();
+        input.select();
+      }
+    }
+
+    // Criação de Playlists
+    async function promptCreatePlaylist() {
+      const name = prompt('Nome da nova playlist:');
+      if (!name || !name.trim()) return;
+
+      const res = await fetch('/api/playlist/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() })
+      });
+      const data = await res.json();
+      if (data.success && data.playlist) {
+        await fetchState();
+        selectPlaylist(data.playlist.id); // Abre direto a playlist criada!
+      }
+    }
+
+    // Renomear Playlist
+    async function promptRenamePlaylist(plId, oldName) {
+      const newName = prompt('Novo nome para a playlist:', oldName);
+      if (!newName || !newName.trim() || newName.trim() === oldName) return;
+
+      await fetch('/api/playlist/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playlist_id: plId, name: newName.trim() })
+      });
+      await fetchState();
+    }
+
+    // Excluir Playlist da Barra Lateral
+    async function confirmDeletePlaylist(plId, name) {
+      if (!confirm(`Deseja realmente excluir a playlist "${name}"?\n(As músicas continuarão salvas em Downloads)`)) return;
+
+      await fetch('/api/playlist/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playlist_id: plId })
+      });
+
+      if (currentPlaylistId === plId) {
+        currentPlaylistId = 'downloads';
+      }
+      await fetchState();
+    }
+
+    // Excluir a playlist que está atualmente aberta na tela
+    async function deleteCurrentActivePlaylist() {
+      const pl = state.playlists.find(p => p.id === currentPlaylistId);
+      if (!pl || pl.is_system) return;
+      confirmDeletePlaylist(pl.id, pl.name);
+    }
+
+    // Gerenciador de Playlists por Música
+    function openPlaylistModal(trackId) {
+      selectedTrackForModal = trackId;
+      const modal = document.getElementById('modalPlaylist');
+      const list = document.getElementById('modalPlList');
+
+      const customPls = state.playlists.filter(p => !p.is_system);
+      if (customPls.length === 0) {
+        list.innerHTML = `
+          <div style="color:#B3B3B3; font-size:13px; text-align:center; padding:16px;">
+            Nenhuma playlist criada ainda.<br>
+            <button class="btn-sidebar-new" style="margin-top:10px" onclick="closeModal(); promptCreatePlaylist()">＋ Criar uma Playlist</button>
+          </div>
+        `;
+      } else {
+        list.innerHTML = customPls.map(pl => {
+          const isAdded = pl.track_ids && pl.track_ids.includes(trackId);
+          return `
+            <div class="modal-pl-row">
+              <span style="font-size:13px; font-weight:700">🎵 ${pl.name}</span>
+              <button class="btn-modal-add ${isAdded ? 'added' : ''}" onclick="togglePlaylistTrack('${pl.id}', '${trackId}', ${isAdded})">
+                ${isAdded ? '✓ Adicionada (Remover)' : '＋ Adicionar'}
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
+      modal.classList.add('open');
+    }
+
+    async function togglePlaylistTrack(plId, trackId, isCurrentlyAdded) {
+      const endpoint = isCurrentlyAdded ? '/api/playlist/remove_track' : '/api/playlist/add_track';
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playlist_id: plId, track_id: trackId })
+      });
+      await fetchState();
+      openPlaylistModal(trackId);
+    }
+
+    function closeModal() {
+      document.getElementById('modalPlaylist').classList.remove('open');
+    }
+
+    // Exclusão de Músicas
+    async function removeTrack(trackId) {
+      if (currentPlaylistId === 'downloads') {
+        if (!confirm('Deseja excluir esta música permanentemente do seu celular?')) return;
+        await fetch('/api/track/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ track_id: trackId })
+        });
+      } else {
+        await fetch('/api/playlist/remove_track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playlist_id: currentPlaylistId, track_id: trackId })
+        });
+      }
+      await fetchState();
+    }
+
+    // Inicialização
+    fetchState();
+  </script>
+</body>
+</html>

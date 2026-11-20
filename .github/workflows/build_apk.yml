@@ -1,0 +1,55 @@
+name: Build SpotyLink APK Nativo
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'android-app/**'
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar Android SDK Components
+        run: |
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Download Gradle Wrapper JAR
+        working-directory: android-app
+        run: |
+          mkdir -p gradle/wrapper
+          curl -sL -o gradle/wrapper/gradle-wrapper.jar \
+            "https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar"
+
+      - name: Tornar gradlew executável
+        working-directory: android-app
+        run: chmod +x gradlew
+
+      - name: Compilar APK Debug
+        working-directory: android-app
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Listar APKs gerados
+        run: find android-app -name "*.apk" -type f
+
+      - name: Upload SpotyLink APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpotyLink-APK
+          path: android-app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
