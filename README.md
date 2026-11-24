@@ -45,15 +45,14 @@ Criado exclusivamente para estudos pessoais e testes sem fins lucrativos.
 
 ## 📱 Como Baixar e Instalar o APK no Android (Pelo GitHub Actions)
 
-O aplicativo é compilado automaticamente na nuvem através do GitHub Actions no seu repositório:
+O aplicativo é compilado automaticamente na nuvem através do GitHub Actions no seu repositório público:
 
-1. Acesse o seu repositório: [github.com/urubu69/apkm](https://github.com/urubu69/apkm)
-2. Clique na aba **Actions** (no topo da página).
-3. Selecione a execução mais recente do workflow **Build SpotyLink APK Nativo**.
-   *(Se for a primeira vez, clique em "I understand my workflows, go ahead and enable them" caso solicitado).*
-4. Role até o final da página na seção **Artifacts** (Artefatos).
-5. Clique em **`SpotyLink-APK`** para baixar o arquivo `.zip` com o instalador `.apk`.
-6. No celular, extraia e abra o arquivo `app-debug.apk` para instalar o SpotyLink diretamente!
+1. Acesse o seu repositório público: [github.com/urubu69/apk](https://github.com/urubu69/apk)
+2. Acesse a aba **Releases**: [github.com/urubu69/apk/releases](https://github.com/urubu69/apk/releases)
+3. Baixe diretamente o arquivo **`SpotyLink.apk`** (sem precisar descompactar `.zip` nem fazer login).
+4. No celular, toque no arquivo baixado e clique em **Instalar**!
+
+*(Caso queira acompanhar o processo de compilação em tempo real, veja a aba **[Actions](https://github.com/urubu69/apk/actions)**).*
 
 ---
 

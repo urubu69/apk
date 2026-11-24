@@ -1,0 +1,11 @@
+{
+  "tracks": [],
+  "playlists": [
+    {
+      "id": "downloads",
+      "name": "Downloads",
+      "is_system": true,
+      "track_ids": []
+    }
+  ]
+}

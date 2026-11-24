@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
   push:
     branches: [ main, master ]
-    paths:
-      - 'android-app/**'
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout código
@@ -25,9 +25,10 @@ jobs:
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Instalar Android SDK Components
+      - name: Aceitar licenças e verificar SDK
         run: |
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
+          yes | sdkmanager --licenses || true
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" || true
 
       - name: Download Gradle Wrapper JAR
         working-directory: android-app
@@ -44,12 +45,31 @@ jobs:
         working-directory: android-app
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Listar APKs gerados
-        run: find android-app -name "*.apk" -type f
+      - name: Preparar APK para download
+        run: |
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk SpotyLink.apk
 
-      - name: Upload SpotyLink APK
+      - name: Upload SpotyLink APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: SpotyLink-APK
-          path: android-app/app/build/outputs/apk/debug/*.apk
+          path: SpotyLink.apk
           if-no-files-found: error
+
+      - name: Criar Release com Link Direto do APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: "SpotyLink v1.0.0 (APK Oficial)"
+          body: |
+            🎵 **SpotyLink para Android (Nativo)**
+            - Sem terminal e sem localhost
+            - Toca com tela bloqueada e controle de fone/carro
+            - Permite baixar músicas e importar arquivos locais do celular
+            
+            👉 **Clique em `SpotyLink.apk` abaixo para baixar e instalar no celular!**
+          files: SpotyLink.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
