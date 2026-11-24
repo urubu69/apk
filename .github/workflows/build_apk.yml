@@ -28,12 +28,14 @@ jobs:
       - name: Configurar local.properties
         working-directory: android-app
         run: |
-          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          ANDROID_PATH="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "sdk.dir=$ANDROID_PATH" > local.properties
           cat local.properties
 
       - name: Aceitar Licenças do Android SDK
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          ANDROID_PATH="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          yes | "$ANDROID_PATH/cmdline-tools/latest/bin/sdkmanager" --licenses || true
 
       - name: Tornar gradlew executável
         working-directory: android-app
