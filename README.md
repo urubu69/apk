@@ -35,11 +35,25 @@ Criado exclusivamente para estudos pessoais e testes sem fins lucrativos.
 6. **Ícone Oficial Personalizado**:
    - O ícone da nota musical verde pixelada está integrado no executável Windows (`.exe`), na barra de títulos da janela, na barra de tarefas do Windows e no logo da barra lateral.
 
-7. **📱 Adaptação para Smartphones Android**:
-   - **Instalação Direta no Celular (Termux - 100% Offline)**: Roda nativamente no celular sem precisar do computador ligado. Salva as músicas na memória do celular e instala como app nativo no Google Chrome com o ícone verde na tela inicial.
-   - **Pacote Pronto**: Arquivo `SpotyLink_Android.zip` pronto para transferir para o celular.
-   - **Compilação de APK**: Arquivos `android/buildozer.spec` e fluxo `.github/workflows/build_apk.yml` para compilar o `.apk` na nuvem.
-   - **Conexão Wi-Fi ao PC**: Permite parear via QR Code ou navegador local.
+7. **📱 Adaptação para Smartphones Android (APK Nativo & Offline)**:
+   - **Aplicativo Nativo (.apk)**: Projeto Android compilado automaticamente via GitHub Actions. Roda diretamente no celular sem necessidade de terminal, servidor ou localhost.
+   - **Segundo Plano & Tela de Bloqueio**: Suporte nativo ao Android MediaSession para controle por fones de ouvido, Bluetooth do carro e notificação de mídia na tela bloqueada.
+   - **Importação Direta**: Além de baixar por links, permite importar arquivos `.mp3` existentes no aparelho.
+   - **Opção Alternativa (Termux/PWA)**: Inclui também scripts para rodar em servidor local via Termux com `SpotyLink_Android.zip`.
+
+---
+
+## 📱 Como Baixar e Instalar o APK no Android (Pelo GitHub Actions)
+
+O aplicativo é compilado automaticamente na nuvem através do GitHub Actions no seu repositório:
+
+1. Acesse o seu repositório: [github.com/urubu69/apkm](https://github.com/urubu69/apkm)
+2. Clique na aba **Actions** (no topo da página).
+3. Selecione a execução mais recente do workflow **Build SpotyLink APK Nativo**.
+   *(Se for a primeira vez, clique em "I understand my workflows, go ahead and enable them" caso solicitado).*
+4. Role até o final da página na seção **Artifacts** (Artefatos).
+5. Clique em **`SpotyLink-APK`** para baixar o arquivo `.zip` com o instalador `.apk`.
+6. No celular, extraia e abra o arquivo `app-debug.apk` para instalar o SpotyLink diretamente!
 
 ---
 
