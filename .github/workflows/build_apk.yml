@@ -22,20 +22,18 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Aceitar licenças e verificar SDK
-        run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" || true
-
-      - name: Download Gradle Wrapper JAR
+      - name: Configurar local.properties
         working-directory: android-app
         run: |
-          mkdir -p gradle/wrapper
-          curl -sL -o gradle/wrapper/gradle-wrapper.jar \
-            "https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          cat local.properties
+
+      - name: Aceitar Licenças do Android SDK
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Tornar gradlew executável
         working-directory: android-app
@@ -48,6 +46,7 @@ jobs:
       - name: Preparar APK para download
         run: |
           cp android-app/app/build/outputs/apk/debug/app-debug.apk SpotyLink.apk
+          ls -lh SpotyLink.apk
 
       - name: Upload SpotyLink APK Artifact
         uses: actions/upload-artifact@v4
