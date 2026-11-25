@@ -60,15 +60,16 @@ jobs:
       - name: Criar Release com Link Direto do APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: "SpotyLink v1.0.0 (APK Oficial)"
+          tag_name: v1.0.1
+          name: "SpotyLink v1.0.1 (APK Oficial Atualizado)"
           body: |
-            🎵 **SpotyLink para Android (Nativo)**
-            - Sem terminal e sem localhost
-            - Toca com tela bloqueada e controle de fone/carro
-            - Permite baixar músicas e importar arquivos locais do celular
+            🎵 **SpotyLink v1.0.1 para Android (Nativo)**
+            - Modais internos para criação e renomeação de playlists (corrigido bug de clique)
+            - Diálogo de confirmação para exclusão
+            - Importação de MP3 com leitura automática de Artista e Título
+            - Toca com tela bloqueada e suporte a Bluetooth
             
-            👉 **Clique em `SpotyLink.apk` abaixo para baixar e instalar no celular!**
+            👉 **Clique em `SpotyLink.apk` abaixo para baixar e atualizar no seu celular!**
           files: SpotyLink.apk
           draft: false
           prerelease: false

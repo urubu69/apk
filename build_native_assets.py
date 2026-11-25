@@ -23,6 +23,56 @@ html = html.replace('</form>', import_btn + '      </form>')
 script_start = html.find('<script>')
 html_head_body = html[:script_start]
 
+# Adiciona os modais de Criar Playlist, Renomear e Confirmação antes do script
+modals_html = '''
+  <!-- Modal Criar Playlist -->
+  <div class="modal-backdrop" id="modalCreatePlaylist">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>Nova Playlist</span>
+        <button class="btn-close-sidebar" style="width:28px; height:28px" onclick="closeCreatePlaylistModal()">✕</button>
+      </div>
+      <input type="text" id="inputNewPlaylistName" placeholder="Nome da playlist..." style="width:100%; padding:12px; border-radius:10px; border:1px solid #333; background:#282828; color:#fff; font-size:15px; margin-bottom:16px; outline:none;">
+      <div style="display:flex; gap:10px;">
+        <button class="btn-action" style="flex:1; background:#282828; color:#fff; border:none; padding:12px; border-radius:12px; font-weight:700" onclick="closeCreatePlaylistModal()">Cancelar</button>
+        <button class="btn-action" style="flex:1; background:#1DB954; color:#000; border:none; padding:12px; border-radius:12px; font-weight:700" onclick="submitCreatePlaylist()">Criar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Renomear Playlist -->
+  <div class="modal-backdrop" id="modalRenamePlaylist">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>Renomear Playlist</span>
+        <button class="btn-close-sidebar" style="width:28px; height:28px" onclick="closeRenamePlaylistModal()">✕</button>
+      </div>
+      <input type="text" id="inputRenamePlaylistName" placeholder="Novo nome..." style="width:100%; padding:12px; border-radius:10px; border:1px solid #333; background:#282828; color:#fff; font-size:15px; margin-bottom:16px; outline:none;">
+      <div style="display:flex; gap:10px;">
+        <button class="btn-action" style="flex:1; background:#282828; color:#fff; border:none; padding:12px; border-radius:12px; font-weight:700" onclick="closeRenamePlaylistModal()">Cancelar</button>
+        <button class="btn-action" style="flex:1; background:#1DB954; color:#000; border:none; padding:12px; border-radius:12px; font-weight:700" onclick="submitRenamePlaylist()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmação -->
+  <div class="modal-backdrop" id="modalConfirm">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span id="confirmModalTitle">Confirmação</span>
+        <button class="btn-close-sidebar" style="width:28px; height:28px" onclick="closeConfirmModal()">✕</button>
+      </div>
+      <p id="confirmModalText" style="color:#b3b3b3; font-size:14px; margin-bottom:18px;">Tem certeza?</p>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-action" style="flex:1; background:#282828; color:#fff; border:none; padding:12px; border-radius:12px; font-weight:700" onclick="closeConfirmModal()">Cancelar</button>
+        <button class="btn-action" style="flex:1; background:#e91429; color:#fff; border:none; padding:12px; border-radius:12px; font-weight:700" id="btnConfirmAction">Excluir</button>
+      </div>
+    </div>
+  </div>
+'''
+
+html_head_body += modals_html
+
 native_script = '''<script>
     let state = { tracks: [], playlists: [] };
     let currentPlaylistId = 'downloads';
@@ -30,6 +80,7 @@ native_script = '''<script>
     let currentTrackIndex = -1;
     let selectedTrackForModal = null;
     let isNativePlaying = false;
+    let playlistToRenameId = null;
 
     const audio = document.getElementById('audioElement');
     const btnPlayPause = document.getElementById('btnPlayPause');
@@ -103,7 +154,7 @@ native_script = '''<script>
 
       const customPlaylists = state.playlists.filter(p => p.id !== 'downloads');
       if (customPlaylists.length === 0) {
-        customList.innerHTML = '<div style="padding:12px; color:#777; font-size:12px; text-align:center;">Nenhuma playlist personalizada criada</div>';
+        customList.innerHTML = '<div style="padding:14px; color:#777; font-size:13px; text-align:center;">Nenhuma playlist criada.<br>Toque em <b>＋ Nova</b> acima!</div>';
         return;
       }
 
@@ -121,8 +172,8 @@ native_script = '''<script>
             <div class="sidebar-pl-meta">${count} música${count === 1 ? '' : 's'}</div>
           </div>
           <div class="sidebar-pl-actions" onclick="event.stopPropagation()">
-            <button class="btn-sidebar-icon" title="Renomear" onclick="promptRenamePlaylist('${pl.id}')">✏️</button>
-            <button class="btn-sidebar-icon btn-del" title="Excluir" onclick="deletePlaylist('${pl.id}')">🗑️</button>
+            <button class="btn-sidebar-icon" title="Renomear" onclick="openRenamePlaylistModal('${pl.id}')">✏️</button>
+            <button class="btn-sidebar-icon btn-del" title="Excluir" onclick="confirmDeletePlaylist('${pl.id}')">🗑️</button>
           </div>
         `;
         customList.appendChild(item);
@@ -159,8 +210,8 @@ native_script = '''<script>
         listEl.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">🎵</div>
-            <p>Nenhuma música nesta playlist.</p>
-            <p style="font-size:12px; margin-top:4px;">Cole um link acima ou importe MP3 do celular!</p>
+            <p style="font-weight:700">Nenhuma música nesta playlist.</p>
+            <p style="font-size:12px; margin-top:6px; color:#888;">Toque em <b>📁 Importar MP3 do Celular</b> acima<br>para tocar suas músicas no SpotyLink!</p>
           </div>
         `;
         return;
@@ -182,7 +233,7 @@ native_script = '''<script>
           </div>
           <div class="track-actions" onclick="event.stopPropagation()">
             <button class="btn-action" title="Adicionar à playlist" onclick="openAddToPlaylistModal('${track.id}')">＋</button>
-            <button class="btn-action" title="Excluir" onclick="deleteTrack('${track.id}')">🗑️</button>
+            <button class="btn-action" title="Excluir" onclick="confirmDeleteTrack('${track.id}')">🗑️</button>
           </div>
         `;
         listEl.appendChild(item);
@@ -271,7 +322,10 @@ native_script = '''<script>
       document.getElementById('btnSubmitAdd').textContent = '+ Adicionar';
       document.getElementById('btnSubmitAdd').disabled = false;
 
-      if (!success) return;
+      if (!success) {
+        alert('Não foi possível baixar este link diretamente.\\n\\n👉 Dica: Você pode usar o botão "📁 Importar MP3 do Celular" para adicionar qualquer música do seu celular no SpotyLink!');
+        return;
+      }
 
       const newTrack = {
         id: trackId,
@@ -303,21 +357,20 @@ native_script = '''<script>
       }
     }
 
-    // Adição de música
+    // Formulário de adicionar por link
     document.getElementById('formAddMusic').onsubmit = function(e) {
       e.preventDefault();
       const input = document.getElementById('inputUrl');
       const url = input.value.trim();
       if (!url) return;
 
-      document.getElementById('btnSubmitAdd').textContent = 'Baixando...';
+      document.getElementById('btnSubmitAdd').textContent = 'Processando...';
       document.getElementById('btnSubmitAdd').disabled = true;
 
       if (window.Android && window.Android.downloadAudioLink) {
         window.Android.downloadAudioLink(url);
         input.value = '';
       } else {
-        // Fallback web
         fetch('/api/download', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -344,61 +397,118 @@ native_script = '''<script>
       }
     }
 
+    // ==========================================
+    // MODAIS PARA PLAYLISTS (100% NATIVOS NO HTML)
+    // ==========================================
     function promptCreatePlaylist() {
-      const name = prompt('Nome da nova playlist:');
-      if (!name || !name.trim()) return;
+      document.getElementById('inputNewPlaylistName').value = '';
+      document.getElementById('modalCreatePlaylist').classList.add('open');
+      setTimeout(() => document.getElementById('inputNewPlaylistName').focus(), 150);
+    }
+
+    function closeCreatePlaylistModal() {
+      document.getElementById('modalCreatePlaylist').classList.remove('open');
+    }
+
+    function submitCreatePlaylist() {
+      const name = document.getElementById('inputNewPlaylistName').value.trim();
+      if (!name) return;
 
       const newId = 'pl_' + Date.now();
-      state.playlists.push({ id: newId, name: name.trim(), track_ids: [] });
+      state.playlists.push({ id: newId, name: name, track_ids: [] });
       saveState();
+      closeCreatePlaylistModal();
       selectPlaylist(newId);
     }
 
-    function promptRenamePlaylist(id) {
+    function openRenamePlaylistModal(id) {
+      playlistToRenameId = id;
       const pl = state.playlists.find(p => p.id === id);
       if (!pl) return;
-      const newName = prompt('Novo nome da playlist:', pl.name);
-      if (!newName || !newName.trim()) return;
 
-      pl.name = newName.trim();
-      saveState();
-      renderSidebar();
-      renderActivePlaylistBanner();
+      document.getElementById('inputRenamePlaylistName').value = pl.name;
+      document.getElementById('modalRenamePlaylist').classList.add('open');
+      setTimeout(() => document.getElementById('inputRenamePlaylistName').focus(), 150);
     }
 
-    function deletePlaylist(id) {
-      if (!confirm('Deseja realmente excluir esta playlist? As músicas baixadas não serão apagadas.')) return;
-      state.playlists = state.playlists.filter(p => p.id !== id);
-      if (currentPlaylistId === id) currentPlaylistId = 'downloads';
-      saveState();
-      renderSidebar();
-      renderActivePlaylistBanner();
-      renderTracks();
+    function closeRenamePlaylistModal() {
+      document.getElementById('modalRenamePlaylist').classList.remove('open');
+      playlistToRenameId = null;
     }
 
-    function deleteTrack(id) {
-      if (!confirm('Deseja excluir esta faixa?')) return;
+    function submitRenamePlaylist() {
+      if (!playlistToRenameId) return;
+      const name = document.getElementById('inputRenamePlaylistName').value.trim();
+      if (!name) return;
 
-      if (window.Android && window.Android.deleteTrackFile) {
-        window.Android.deleteTrackFile(id);
+      const pl = state.playlists.find(p => p.id === playlistToRenameId);
+      if (pl) {
+        pl.name = name;
+        saveState();
+        renderSidebar();
+        renderActivePlaylistBanner();
       }
+      closeRenamePlaylistModal();
+    }
 
-      state.playlists.forEach(p => {
-        p.track_ids = p.track_ids.filter(tid => tid !== id);
-      });
-      state.tracks = state.tracks.filter(t => t.id !== id);
+    function confirmDeletePlaylist(id) {
+      const pl = state.playlists.find(p => p.id === id);
+      if (!pl) return;
 
-      if (currentTrack && currentTrack.id === id) {
-        if (window.Android) window.Android.pauseTrack();
-        currentTrack = null;
-        document.getElementById('playerTitle').textContent = 'Nenhuma música tocando';
-        document.getElementById('playerArtist').textContent = 'Selecione uma faixa acima';
-      }
+      document.getElementById('confirmModalTitle').textContent = 'Excluir Playlist';
+      document.getElementById('confirmModalText').textContent = `Deseja realmente excluir a playlist "${pl.name}"? As músicas continuarão salvas em Downloads.`;
+      
+      const btn = document.getElementById('btnConfirmAction');
+      btn.onclick = function() {
+        state.playlists = state.playlists.filter(p => p.id !== id);
+        if (currentPlaylistId === id) currentPlaylistId = 'downloads';
+        saveState();
+        closeConfirmModal();
+        renderSidebar();
+        renderActivePlaylistBanner();
+        renderTracks();
+      };
 
-      saveState();
-      renderSidebar();
-      renderActivePlaylistBanner();
-      renderTracks();
+      document.getElementById('modalConfirm').classList.add('open');
+    }
+
+    function confirmDeleteTrack(id) {
+      const track = state.tracks.find(t => t.id === id);
+      const title = track ? track.title : 'esta música';
+
+      document.getElementById('confirmModalTitle').textContent = 'Excluir Música';
+      document.getElementById('confirmModalText').textContent = `Deseja excluir "${title}"?`;
+
+      const btn = document.getElementById('btnConfirmAction');
+      btn.onclick = function() {
+        if (window.Android && window.Android.deleteTrackFile) {
+          window.Android.deleteTrackFile(id);
+        }
+
+        state.playlists.forEach(p => {
+          p.track_ids = p.track_ids.filter(tid => tid !== id);
+        });
+        state.tracks = state.tracks.filter(t => t.id !== id);
+
+        if (currentTrack && currentTrack.id === id) {
+          if (window.Android) window.Android.pauseTrack();
+          currentTrack = null;
+          document.getElementById('playerTitle').textContent = 'Nenhuma música tocando';
+          document.getElementById('playerArtist').textContent = 'Selecione uma faixa acima';
+        }
+
+        saveState();
+        closeConfirmModal();
+        renderSidebar();
+        renderActivePlaylistBanner();
+        renderTracks();
+      };
+
+      document.getElementById('modalConfirm').classList.add('open');
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('modalConfirm').classList.remove('open');
     }
 
     function openAddToPlaylistModal(trackId) {

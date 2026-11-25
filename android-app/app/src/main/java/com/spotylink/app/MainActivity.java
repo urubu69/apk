@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.OpenableColumns;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -85,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements MusicService.Play
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         webView.setWebViewClient(new WebViewClient());
+        webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
         webView.setBackgroundColor(0xFF121212);
     }
@@ -121,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements MusicService.Play
     private void importLocalAudioFile(Uri uri) {
         try {
             String fileName = "Música Importada";
+            String artist = "SpotyLink";
             Cursor cursor = getContentResolver().query(uri, null, null, null, null);
             if (cursor != null) {
                 int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -129,6 +132,20 @@ public class MainActivity extends AppCompatActivity implements MusicService.Play
                 }
                 cursor.close();
             }
+
+            if (fileName.contains(".")) {
+                fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+            }
+
+            try {
+                android.media.MediaMetadataRetriever mmr = new android.media.MediaMetadataRetriever();
+                mmr.setDataSource(this, uri);
+                String metaTitle = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE);
+                String metaArtist = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                if (metaTitle != null && !metaTitle.trim().isEmpty()) fileName = metaTitle.trim();
+                if (metaArtist != null && !metaArtist.trim().isEmpty()) artist = metaArtist.trim();
+                mmr.release();
+            } catch (Exception ignored) {}
 
             File dir = new File(getFilesDir(), "downloads");
             if (!dir.exists()) dir.mkdirs();
