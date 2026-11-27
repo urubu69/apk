@@ -69,6 +69,16 @@ public class MainActivity extends AppCompatActivity implements MusicService.Play
         setupWebView();
         checkPermissions();
 
+        // Inicializa o motor nativo yt-dlp e ffmpeg em segundo plano
+        new Thread(() -> {
+            try {
+                com.yausername.youtubedl_android.YoutubeDL.getInstance().init(getApplicationContext());
+                com.yausername.ffmpeg.FFmpeg.getInstance().init(getApplicationContext());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+
         // Carrega o aplicativo nativamente do pacote de assets (sem localhost!)
         webView.loadUrl("file:///android_asset/index.html");
     }
@@ -165,8 +175,8 @@ public class MainActivity extends AppCompatActivity implements MusicService.Play
 
             Toast.makeText(this, "Música importada!", Toast.LENGTH_SHORT).show();
 
-            String js = String.format("javascript:window.onNativeDownloadComplete(true, '%s', '%s', '%s');",
-                    trackId, fileName.replace("'", "\\'"), dest.getAbsolutePath().replace("\\", "/"));
+            String js = String.format("javascript:window.onNativeDownloadComplete(true, '%s', '%s', '%s', '%s');",
+                    trackId, fileName.replace("'", "\\'"), artist.replace("'", "\\'"), dest.getAbsolutePath().replace("\\", "/"));
             webView.evaluateJavascript(js, null);
 
         } catch (Exception e) {

@@ -149,126 +149,133 @@ public class WebAppInterface {
     @JavascriptInterface
     public void downloadAudioLink(String rawUrl) {
         String cleanUrl = cleanMobileUrl(rawUrl);
-        showToast("Iniciando download...");
+        showToast("Iniciando download com yt-dlp...");
 
-        // Resolve áudio através de endpoint de extração aberta de áudio ou download direto
-        String apiUrl = "https://api.cobalt.tools/api/json";
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put("url", cleanUrl);
-            payload.put("downloadMode", "audio");
-            payload.put("audioFormat", "mp3");
-        } catch (Exception ignored) {}
-
-        okhttp3.RequestBody body = okhttp3.RequestBody.create(
-                payload.toString(),
-                okhttp3.MediaType.parse("application/json; charset=utf-8")
-        );
-
-        Request req = new Request.Builder()
-                .url(apiUrl)
-                .addHeader("Accept", "application/json")
-                .addHeader("Content-Type", "application/json")
-                .post(body)
-                .build();
-
-        httpClient.newCall(req).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, java.io.IOException e) {
-                showToast("Erro de rede ao buscar áudio: " + e.getMessage());
-                notifyDownloadFinished(false, null, null, null);
-            }
-
-            @Override
-            public void onResponse(Call call, Response res) throws java.io.IOException {
+        new Thread(() -> {
+            try {
+                // Garante que YoutubeDL e FFmpeg estejam inicializados
                 try {
-                    String respStr = res.body().string();
-                    JSONObject json = new JSONObject(respStr);
-                    String streamUrl = json.optString("url");
-                    String title = json.optString("title", "Música Baixada");
+                    com.yausername.youtubedl_android.YoutubeDL.getInstance().init(activity.getApplicationContext());
+                    com.yausername.ffmpeg.FFmpeg.getInstance().init(activity.getApplicationContext());
+                } catch (Exception ignored) {}
 
-                    if (streamUrl != null && !streamUrl.isEmpty()) {
-                        saveRemoteStream(streamUrl, title);
-                    } else {
-                        // Tenta resolver por serviço alternativo
-                        resolveFallback(cleanUrl);
-                    }
-                } catch (Exception ex) {
-                    resolveFallback(cleanUrl);
-                }
-            }
-        });
-    }
+                File dir = new File(activity.getFilesDir(), "downloads");
+                if (!dir.exists()) dir.mkdirs();
 
-    private void resolveFallback(String url) {
-        // Fallback direto: se for link direto de áudio ou stream
-        if (url.endsWith(".mp3") || url.endsWith(".m4a") || url.endsWith(".wav") || url.endsWith(".ogg")) {
-            saveRemoteStream(url, "Música " + System.currentTimeMillis());
-        } else {
-            showToast("Para links do YouTube, use também '📁 Importar MP3' ou aguarde a conexão.");
-            notifyDownloadFinished(false, null, null, null);
-        }
-    }
+                String trackId = UUID.randomUUID().toString().substring(0, 10);
+                File destFile = new File(dir, trackId + ".mp3");
 
-    private void saveRemoteStream(String streamUrl, String title) {
-        Request dlReq = new Request.Builder().url(streamUrl).build();
-        httpClient.newCall(dlReq).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, java.io.IOException e) {
-                showToast("Falha no download do áudio");
-                notifyDownloadFinished(false, null, null, null);
-            }
-
-            @Override
-            public void onResponse(Call call, Response res) throws java.io.IOException {
+                // Tenta buscar metadados de Título e Artista
+                String title = "Música";
+                String artist = "SpotyLink";
                 try {
-                    File dir = new File(activity.getFilesDir(), "downloads");
-                    if (!dir.exists()) dir.mkdirs();
-
-                    String trackId = UUID.randomUUID().toString().substring(0, 10);
-                    File audioFile = new File(dir, trackId + ".mp3");
-
-                    InputStream is = res.body().byteStream();
-                    FileOutputStream fos = new FileOutputStream(audioFile);
-                    byte[] buf = new byte[8192];
-                    int len;
-                    while ((len = is.read(buf)) != -1) {
-                        fos.write(buf, 0, len);
+                    com.yausername.youtubedl_android.YoutubeDLRequest infoRequest =
+                            new com.yausername.youtubedl_android.YoutubeDLRequest(cleanUrl);
+                    com.yausername.youtubedl_android.mapper.VideoInfo info =
+                            com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(infoRequest);
+                    if (info != null) {
+                        if (info.getTitle() != null && !info.getTitle().isEmpty()) {
+                            title = info.getTitle();
+                        }
+                        if (info.getUploader() != null && !info.getUploader().isEmpty()) {
+                            artist = info.getUploader();
+                        }
                     }
-                    fos.close();
-                    is.close();
-
-                    showToast("Música baixada com sucesso!");
-                    notifyDownloadFinished(true, trackId, title, audioFile.getAbsolutePath());
                 } catch (Exception e) {
-                    showToast("Erro ao salvar arquivo: " + e.getMessage());
-                    notifyDownloadFinished(false, null, null, null);
+                    e.printStackTrace();
                 }
+
+                // Prepara a requisição para o yt-dlp nativo
+                com.yausername.youtubedl_android.YoutubeDLRequest request =
+                        new com.yausername.youtubedl_android.YoutubeDLRequest(cleanUrl);
+
+                request.addOption("--extract-audio");
+                request.addOption("--audio-format", "mp3");
+                request.addOption("--audio-quality", "0");
+                request.addOption("--no-playlist");
+                request.addOption("-o", new File(dir, trackId + ".%(ext)s").getAbsolutePath());
+
+                // Executa download e conversão nativa
+                com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(request, (progress, etaInSeconds, line) -> {});
+
+                File finalFile = null;
+                if (destFile.exists() && destFile.length() > 0) {
+                    finalFile = destFile;
+                } else {
+                    File[] matching = dir.listFiles((d, name) -> name.startsWith(trackId));
+                    if (matching != null && matching.length > 0 && matching[0].length() > 0) {
+                        finalFile = matching[0];
+                    }
+                }
+
+                if (finalFile != null) {
+                    if ("Música".equals(title)) {
+                        try {
+                            android.media.MediaMetadataRetriever mmr = new android.media.MediaMetadataRetriever();
+                            mmr.setDataSource(finalFile.getAbsolutePath());
+                            String metaTitle = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE);
+                            String metaArtist = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                            if (metaTitle != null && !metaTitle.trim().isEmpty()) title = metaTitle.trim();
+                            if (metaArtist != null && !metaArtist.trim().isEmpty()) artist = metaArtist.trim();
+                            mmr.release();
+                        } catch (Exception ignored) {}
+                    }
+
+                    showToast("Download concluído com sucesso!");
+                    notifyDownloadFinished(true, trackId, title, artist, finalFile.getAbsolutePath());
+                } else {
+                    showToast("Falha ao salvar áudio.");
+                    notifyDownloadFinished(false, null, null, null, null);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                showToast("Erro no download: " + (e.getMessage() != null ? e.getMessage() : "URL inválida ou indisponível"));
+                notifyDownloadFinished(false, null, null, null, null);
             }
-        });
+        }).start();
     }
 
-    private void notifyDownloadFinished(boolean success, String trackId, String title, String path) {
+    private void notifyDownloadFinished(boolean success, String trackId, String title, String artist, String path) {
         mainHandler.post(() -> {
             if (activity.getWebView() != null) {
-                String js = String.format("javascript:window.onNativeDownloadComplete(%b, '%s', '%s', '%s');",
+                String js = String.format("javascript:window.onNativeDownloadComplete(%b, '%s', '%s', '%s', '%s');",
                         success,
                         trackId != null ? trackId : "",
-                        title != null ? title.replace("'", "\\'") : "",
+                        title != null ? title.replace("'", "\\'").replace("\n", " ") : "",
+                        artist != null ? artist.replace("'", "\\'").replace("\n", " ") : "",
                         path != null ? path.replace("\\", "/") : "");
                 activity.getWebView().evaluateJavascript(js, null);
             }
         });
     }
 
+    @JavascriptInterface
+    public String getClipboard() {
+        try {
+            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null && clipboard.hasPrimaryClip() && clipboard.getPrimaryClip().getItemCount() > 0) {
+                CharSequence text = clipboard.getPrimaryClip().getItemAt(0).getText();
+                if (text != null) return text.toString();
+            }
+        } catch (Exception ignored) {}
+        return "";
+    }
+
     private String cleanMobileUrl(String raw) {
         if (raw == null) return "";
         String s = raw.trim();
         Matcher m = Pattern.compile("https?://\\S+").matcher(s);
-        if (m.find()) s = m.group(0);
-        s = s.replaceAll("m\\.youtube\\.com", "youtube.com");
-        s = s.replaceAll("youtube\\.com/shorts/", "youtube.com/watch?v=");
-        s = s.replaceAll("[?&]si=[^&]+", "");
+        if (m.find()) {
+            s = m.group(0);
+        } else if (!s.startsWith("http://") && !s.startsWith("https://")) {
+            return "ytsearch1:" + s;
+        }
+        if (s.contains("youtube.com") || s.contains("youtu.be")) {
+            s = s.replaceAll("m\\.youtube\\.com", "youtube.com");
+            s = s.replaceAll("youtube\\.com/shorts/", "youtube.com/watch?v=");
+            s = s.replaceAll("[?&]si=[^&]+", "");
+        }
         return s;
     }
 }

@@ -20,6 +20,7 @@ covers/
 *.wav
 *.flac
 *.rar
+*.apk
 
 # Ícones de sistema
 *.lnk

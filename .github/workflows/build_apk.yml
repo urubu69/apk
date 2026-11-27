@@ -60,14 +60,17 @@ jobs:
       - name: Criar Release com Link Direto do APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.1
-          name: "SpotyLink v1.0.1 (APK Oficial Atualizado)"
+          tag_name: v1.0.2
+          name: "SpotyLink v1.0.2 (Motor Nativo yt-dlp e SoundCloud)"
           body: |
-            🎵 **SpotyLink v1.0.1 para Android (Nativo)**
-            - Modais internos para criação e renomeação de playlists (corrigido bug de clique)
-            - Diálogo de confirmação para exclusão
-            - Importação de MP3 com leitura automática de Artista e Título
-            - Toca com tela bloqueada e suporte a Bluetooth
+            🎵 **SpotyLink v1.0.2 para Android (Nativo)**
+            - Motor nativo `yt-dlp` e `ffmpeg` embutidos no APK (sem necessidade de Termux, Python ou servidor externo)
+            - Suporte a download direto de links do **SoundCloud**, **YouTube**, etc.
+            - Suporte a pesquisa por nome de música diretamente no campo de link
+            - Extração automática de metadados reais (Título e Artista)
+            - Botão dedicado para **Importar MP3 do Celular**
+            - Modais completos de gerenciamento de Playlists (Criar, Renomear, Excluir)
+            - Toca em segundo plano com tela bloqueada e suporte a Bluetooth / fone de ouvido
             
             👉 **Clique em `SpotyLink.apk` abaixo para baixar e atualizar no seu celular!**
           files: SpotyLink.apk

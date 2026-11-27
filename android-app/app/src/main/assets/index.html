@@ -989,6 +989,11 @@
       </div>
       <button type="button" class="btn-add" id="btnAdd" onclick="startDownload()">＋ Adicionar</button>
     </div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button type="button" class="btn-add" style="flex:1; background:#282828; color:#fff; border:1px solid #444;" onclick="triggerImportLocal()">
+        📁 Importar MP3 do Celular
+      </button>
+    </div>
     <div id="downloadStatus" class="download-status">Baixando música...</div>
   </section>
 
@@ -1382,24 +1387,90 @@
       }
     };
 
-    window.onNativeDownloadComplete = function(success, trackId, title, filePath) {
-      document.getElementById('btnSubmitAdd').textContent = '+ Adicionar';
-      document.getElementById('btnSubmitAdd').disabled = false;
-
-      if (!success) {
-        alert('Não foi possível baixar este link diretamente.\n\n👉 Dica: Você pode usar o botão "📁 Importar MP3 do Celular" para adicionar qualquer música do seu celular no SpotyLink!');
+    function startDownload() {
+      const input = document.getElementById('inputUrl');
+      const url = input.value.trim();
+      if (!url) {
+        alert('Por favor, insira ou cole um link de música (YouTube, SoundCloud, etc.).');
         return;
       }
+
+      const btn = document.getElementById('btnAdd');
+      const status = document.getElementById('downloadStatus');
+      btn.textContent = 'Baixando...';
+      btn.disabled = true;
+      if (status) {
+        status.textContent = 'Baixando e processando áudio...';
+        status.style.display = 'block';
+      }
+
+      if (window.Android && window.Android.downloadAudioLink) {
+        window.Android.downloadAudioLink(url);
+      } else {
+        alert('Disponível no app nativo (.apk)');
+        btn.textContent = '＋ Adicionar';
+        btn.disabled = false;
+        if (status) status.style.display = 'none';
+      }
+    }
+
+    async function pasteClipboard() {
+      if (window.Android && window.Android.getClipboard) {
+        try {
+          const text = window.Android.getClipboard();
+          if (text) {
+            document.getElementById('inputUrl').value = text.trim();
+            return;
+          }
+        } catch(e) {}
+      }
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) document.getElementById('inputUrl').value = text.trim();
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+
+    window.onNativeDownloadComplete = function(success, trackId, title, artist, filePath) {
+      // Compatibilidade caso sejam passados 4 argumentos (success, trackId, title, filePath)
+      if (filePath === undefined && artist && (artist.includes('/') || artist.includes('\\'))) {
+        filePath = artist;
+        artist = 'SpotyLink';
+      }
+
+      const btn = document.getElementById('btnAdd');
+      const status = document.getElementById('downloadStatus');
+      if (btn) {
+        btn.textContent = '＋ Adicionar';
+        btn.disabled = false;
+      }
+      if (status) {
+        status.style.display = 'none';
+      }
+
+      if (!success) {
+        alert('Não foi possível baixar este link diretamente.\n\n👉 Dica: Verifique se o link é válido (YouTube, SoundCloud, etc.) ou use o botão "📁 Importar MP3 do Celular"!');
+        return;
+      }
+
+      const input = document.getElementById('inputUrl');
+      if (input) input.value = '';
 
       const newTrack = {
         id: trackId,
         title: title || 'Nova Música',
-        artist: 'SpotyLink',
+        artist: artist || 'SpotyLink',
         audioPath: filePath,
         cover: 'icon.png'
       };
 
-      state.tracks.push(newTrack);
+      const idx = state.tracks.findIndex(t => t.id === trackId);
+      if (idx !== -1) {
+        state.tracks[idx] = newTrack;
+      } else {
+        state.tracks.push(newTrack);
+      }
 
       let targetPl = state.playlists.find(p => p.id === currentPlaylistId);
       if (!targetPl) targetPl = state.playlists.find(p => p.id === 'downloads');
@@ -1418,46 +1489,6 @@
         window.Android.pickLocalAudio();
       } else {
         alert('Disponível no app nativo (.apk)');
-      }
-    }
-
-    // Formulário de adicionar por link
-    document.getElementById('formAddMusic').onsubmit = function(e) {
-      e.preventDefault();
-      const input = document.getElementById('inputUrl');
-      const url = input.value.trim();
-      if (!url) return;
-
-      document.getElementById('btnSubmitAdd').textContent = 'Processando...';
-      document.getElementById('btnSubmitAdd').disabled = true;
-
-      if (window.Android && window.Android.downloadAudioLink) {
-        window.Android.downloadAudioLink(url);
-        input.value = '';
-      } else {
-        fetch('/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: url, playlist_id: currentPlaylistId })
-        }).then(r => r.json()).then(data => {
-          document.getElementById('btnSubmitAdd').textContent = '+ Adicionar';
-          document.getElementById('btnSubmitAdd').disabled = false;
-          input.value = '';
-          fetchState();
-        }).catch(err => {
-          alert('Erro no download: ' + err);
-          document.getElementById('btnSubmitAdd').textContent = '+ Adicionar';
-          document.getElementById('btnSubmitAdd').disabled = false;
-        });
-      }
-    };
-
-    async function pasteFromClipboard() {
-      try {
-        const text = await navigator.clipboard.readText();
-        if (text) document.getElementById('inputUrl').value = text.trim();
-      } catch (err) {
-        console.warn(err);
       }
     }
 
