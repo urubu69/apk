@@ -196,7 +196,7 @@ public class WebAppInterface {
                 request.addOption("-o", new File(dir, trackId + ".%(ext)s").getAbsolutePath());
 
                 // Executa download e conversão nativa
-                com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(request, (progress, etaInSeconds, line) -> {});
+                com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(request);
 
                 File finalFile = null;
                 if (destFile.exists() && destFile.length() > 0) {
