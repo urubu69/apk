@@ -241,6 +241,126 @@
     }
 
     /* ========================================================
+       PAINEL DE RESULTADOS DA BUSCA ONLINE
+       ======================================================== */
+    .search-results-section {
+      background: #141414;
+      margin: 0 14px 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #282828;
+      box-sizing: border-box;
+      width: calc(100% - 28px);
+      display: none;
+    }
+    .search-results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #222;
+    }
+    .search-results-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1DB954;
+      letter-spacing: 0.5px;
+    }
+    .btn-close-search {
+      background: #242424;
+      color: #b3b3b3;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .search-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #181818;
+      margin-bottom: 6px;
+      border: 1px solid #222222;
+    }
+    .search-item:last-child {
+      margin-bottom: 0;
+    }
+    .search-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #282828;
+    }
+    .search-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .search-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .search-meta {
+      font-size: 11px;
+      color: #b3b3b3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .search-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .btn-search-stream {
+      background: #2a2a2a;
+      color: #fff;
+      border: 1px solid #3e3e3e;
+      padding: 6px 10px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-search-stream:active {
+      background: #383838;
+    }
+    .btn-search-download {
+      background: #1DB954;
+      color: #000;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-search-download:active {
+      background: #1ed760;
+    }
+    .btn-search-download:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* ========================================================
        BANNER DA PLAYLIST ATIVA
        ======================================================== */
     .active-pl-banner {
@@ -976,26 +1096,35 @@
     </button>
   </header>
 
-  <!-- Campo de Inserir Link (Perfeitamente Enquadrado em qualquer resolução) -->
+  <!-- Campo de Pesquisa e Inserção de Link -->
   <section class="add-section">
     <div class="add-title">
-      <span>ADICIONAR MÚSICA POR LINK</span>
-      <span style="color:#1DB954">Salva em Downloads</span>
+      <span>PESQUISAR OU ADICIONAR MÚSICA</span>
+      <span style="color:#1DB954">Online e Offline</span>
     </div>
     <div class="add-row">
       <div class="input-wrap">
-        <input type="text" id="inputUrl" class="input-url" placeholder="Cole o link ou pesquise o nome da música..." onkeydown="if(event.key==='Enter') startDownload()">
+        <input type="text" id="inputUrl" class="input-url" placeholder="Pesquisar música/artista ou colar link..." onkeydown="if(event.key==='Enter') handleSearchOrDownload()">
         <button type="button" class="btn-paste-inside" onclick="pasteClipboard()" title="Colar">📋</button>
       </div>
-      <button type="button" class="btn-add" id="btnAdd" onclick="startDownload()">＋ Adicionar</button>
+      <button type="button" class="btn-add" id="btnAdd" onclick="handleSearchOrDownload()">🔍 Buscar</button>
     </div>
     <div style="display:flex; gap:8px; margin-top:8px;">
       <button type="button" class="btn-add" style="flex:1; background:#282828; color:#fff; border:1px solid #444;" onclick="triggerImportLocal()">
         📁 Importar MP3 do Celular
       </button>
     </div>
-    <div id="downloadStatus" class="download-status">Baixando música...</div>
+    <div id="downloadStatus" class="download-status">Buscando músicas...</div>
   </section>
+
+  <!-- Painel de Resultados da Busca Online -->
+  <div class="search-results-section" id="searchResultsSection">
+    <div class="search-results-header">
+      <span class="search-results-title">🔎 RESULTADOS DA BUSCA ONLINE</span>
+      <button class="btn-close-search" onclick="closeSearchResults()">✕ Fechar</button>
+    </div>
+    <div id="searchResultsList"></div>
+  </div>
 
   <!-- Banner da Playlist Ativa (Substitui visualmente a tela com a playlist selecionada) -->
   <div class="active-pl-banner" id="activePlBanner">
@@ -1387,13 +1516,43 @@
       }
     };
 
-    function startDownload() {
+    function handleSearchOrDownload() {
       const input = document.getElementById('inputUrl');
-      const url = input.value.trim();
-      if (!url) {
-        alert('Por favor, insira ou cole um link de música (YouTube, SoundCloud, etc.).');
+      const query = input.value.trim();
+      if (!query) {
+        alert('Por favor, digite o nome de uma música/artista ou cole um link.');
         return;
       }
+
+      // Se for link direto, inicia o download imediatamente
+      if (query.startsWith('http://') || query.startsWith('https://')) {
+        startDownload(query);
+        return;
+      }
+
+      const btn = document.getElementById('btnAdd');
+      const status = document.getElementById('downloadStatus');
+      btn.textContent = 'Buscando...';
+      btn.disabled = true;
+      if (status) {
+        status.textContent = `Buscando resultados online para "${query}"...`;
+        status.style.display = 'block';
+      }
+
+      if (window.Android && window.Android.searchOnline) {
+        window.Android.searchOnline(query);
+      } else {
+        alert('Busca online disponível no app nativo (.apk)');
+        btn.textContent = '🔍 Buscar';
+        btn.disabled = false;
+        if (status) status.style.display = 'none';
+      }
+    }
+
+    function startDownload(directUrl) {
+      const input = document.getElementById('inputUrl');
+      const url = (directUrl || input.value).trim();
+      if (!url) return;
 
       const btn = document.getElementById('btnAdd');
       const status = document.getElementById('downloadStatus');
@@ -1408,9 +1567,112 @@
         window.Android.downloadAudioLink(url);
       } else {
         alert('Disponível no app nativo (.apk)');
-        btn.textContent = '＋ Adicionar';
+        btn.textContent = '🔍 Buscar';
         btn.disabled = false;
         if (status) status.style.display = 'none';
+      }
+    }
+
+    window.onSearchResults = function(results) {
+      const btn = document.getElementById('btnAdd');
+      const status = document.getElementById('downloadStatus');
+      if (btn) {
+        btn.textContent = '🔍 Buscar';
+        btn.disabled = false;
+      }
+      if (status) {
+        status.style.display = 'none';
+      }
+
+      const container = document.getElementById('searchResultsSection');
+      const listEl = document.getElementById('searchResultsList');
+      if (!container || !listEl) return;
+
+      listEl.innerHTML = '';
+
+      if (!results || results.length === 0) {
+        listEl.innerHTML = '<div style="color:#888; font-size:12px; text-align:center; padding:12px;">Nenhum resultado encontrado. Tente outro termo de busca.</div>';
+        container.style.display = 'block';
+        return;
+      }
+
+      results.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'search-item';
+        const thumb = item.thumbnail || 'icon.png';
+        const durationText = item.duration ? ` • ${escapeHtml(item.duration)}` : '';
+
+        row.innerHTML = `
+          <img src="${thumb}" class="search-thumb" onerror="this.src='icon.png'" alt="Capa">
+          <div class="search-info">
+            <div class="search-title">${escapeHtml(item.title)}</div>
+            <div class="search-meta">${escapeHtml(item.uploader)}${durationText}</div>
+          </div>
+          <div class="search-actions">
+            <button class="btn-search-stream" title="Ouvir online sem baixar">▶ Ouvir</button>
+            <button class="btn-search-download" title="Baixar para o celular">📥 Baixar</button>
+          </div>
+        `;
+
+        row.querySelector('.btn-search-stream').onclick = () => {
+          streamSearchResult(item.url, item.title, item.uploader, item.thumbnail);
+        };
+
+        const btnDl = row.querySelector('.btn-search-download');
+        btnDl.onclick = () => {
+          downloadSearchResult(item.url, item.title, btnDl);
+        };
+
+        listEl.appendChild(row);
+      });
+
+      container.style.display = 'block';
+    };
+
+    function closeSearchResults() {
+      const container = document.getElementById('searchResultsSection');
+      if (container) container.style.display = 'none';
+    }
+
+    function streamSearchResult(url, title, artist, thumb) {
+      const status = document.getElementById('downloadStatus');
+      if (status) {
+        status.textContent = `Carregando áudio online de "${title}"...`;
+        status.style.display = 'block';
+      }
+
+      currentTrack = {
+        id: 'streaming_' + Date.now(),
+        title: title || 'Música Online',
+        artist: artist || 'SpotyLink Streaming',
+        cover: thumb || 'icon.png',
+        coverPath: thumb || 'icon.png'
+      };
+      updatePlayerUI();
+
+      if (window.Android && window.Android.streamTrack) {
+        window.Android.streamTrack(url, title, artist, thumb);
+      }
+    }
+
+    window.onNativeStreamStarted = function(title, artist, coverUrl) {
+      const status = document.getElementById('downloadStatus');
+      if (status) status.style.display = 'none';
+      if (btnPlayPause) btnPlayPause.textContent = '⏸';
+    };
+
+    function downloadSearchResult(url, title, buttonEl) {
+      if (buttonEl) {
+        buttonEl.textContent = 'Baixando...';
+        buttonEl.disabled = true;
+      }
+      const status = document.getElementById('downloadStatus');
+      if (status) {
+        status.textContent = `Baixando "${title || 'música'}"...`;
+        status.style.display = 'block';
+      }
+      if (window.Android && window.Android.downloadAudioLink) {
+        window.Android.downloadAudioLink(url);
       }
     }
 
@@ -1442,7 +1704,7 @@
       const btn = document.getElementById('btnAdd');
       const status = document.getElementById('downloadStatus');
       if (btn) {
-        btn.textContent = '＋ Adicionar';
+        btn.textContent = '🔍 Buscar';
         btn.disabled = false;
       }
       if (status) {

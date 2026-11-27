@@ -251,6 +251,145 @@ public class WebAppInterface {
     }
 
     @JavascriptInterface
+    public void searchOnline(String query) {
+        new Thread(() -> {
+            try {
+                try {
+                    com.yausername.youtubedl_android.YoutubeDL.getInstance().init(activity.getApplicationContext());
+                } catch (Exception ignored) {}
+
+                String searchPrefix = "ytsearch6:";
+                String cleanQuery = query.trim();
+                if (cleanQuery.toLowerCase().startsWith("sc:") || cleanQuery.toLowerCase().startsWith("soundcloud:")) {
+                    searchPrefix = "scsearch6:";
+                    cleanQuery = cleanQuery.replaceFirst("^(?i)(sc:|soundcloud:)", "").trim();
+                }
+
+                com.yausername.youtubedl_android.YoutubeDLRequest request =
+                        new com.yausername.youtubedl_android.YoutubeDLRequest(searchPrefix + cleanQuery);
+                request.addOption("--dump-json");
+                request.addOption("--flat-playlist");
+
+                com.yausername.youtubedl_android.YoutubeDLResponse response =
+                        com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(request);
+
+                String out = response.getOut();
+                JSONArray results = new JSONArray();
+                if (out != null && !out.isEmpty()) {
+                    String[] lines = out.split("\n");
+                    for (String line : lines) {
+                        line = line.trim();
+                        if (!line.isEmpty()) {
+                            try {
+                                JSONObject obj = new JSONObject(line);
+                                JSONObject item = new JSONObject();
+                                item.put("title", obj.optString("title", "Música"));
+                                item.put("uploader", obj.optString("uploader", obj.optString("channel", "Artista")));
+
+                                String durationStr = obj.optString("duration_string", "");
+                                if (durationStr.isEmpty() && obj.has("duration")) {
+                                    int secs = obj.optInt("duration", 0);
+                                    int mins = secs / 60;
+                                    int remSecs = secs % 60;
+                                    durationStr = String.format("%d:%02d", mins, remSecs);
+                                }
+                                item.put("duration", durationStr);
+
+                                String webUrl = obj.optString("url", "");
+                                if (webUrl.isEmpty() && obj.has("id")) {
+                                    webUrl = "https://www.youtube.com/watch?v=" + obj.getString("id");
+                                }
+                                item.put("url", webUrl);
+
+                                String thumb = "";
+                                if (obj.has("thumbnails")) {
+                                    JSONArray thumbs = obj.getJSONArray("thumbnails");
+                                    if (thumbs.length() > 0) {
+                                        thumb = thumbs.getJSONObject(thumbs.length() - 1).optString("url", "");
+                                    }
+                                } else if (obj.has("thumbnail")) {
+                                    thumb = obj.optString("thumbnail", "");
+                                }
+                                item.put("thumbnail", thumb);
+
+                                results.put(item);
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                }
+
+                mainHandler.post(() -> {
+                    if (activity.getWebView() != null) {
+                        String js = "javascript:window.onSearchResults(" + results.toString() + ");";
+                        activity.getWebView().evaluateJavascript(js, null);
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                mainHandler.post(() -> {
+                    showToast("Erro na pesquisa: " + (e.getMessage() != null ? e.getMessage() : "tente novamente"));
+                    if (activity.getWebView() != null) {
+                        activity.getWebView().evaluateJavascript("javascript:window.onSearchResults([]);", null);
+                    }
+                });
+            }
+        }).start();
+    }
+
+    @JavascriptInterface
+    public void streamTrack(String rawUrl, String title, String artist, String coverUrl) {
+        showToast("Carregando reprodução online...");
+        new Thread(() -> {
+            try {
+                try {
+                    com.yausername.youtubedl_android.YoutubeDL.getInstance().init(activity.getApplicationContext());
+                } catch (Exception ignored) {}
+
+                String cleanUrl = cleanMobileUrl(rawUrl);
+                com.yausername.youtubedl_android.YoutubeDLRequest request =
+                        new com.yausername.youtubedl_android.YoutubeDLRequest(cleanUrl);
+                request.addOption("-g");
+                request.addOption("-f", "bestaudio/best");
+
+                com.yausername.youtubedl_android.YoutubeDLResponse response =
+                        com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(request);
+
+                String streamUrl = response.getOut();
+                if (streamUrl != null) {
+                    streamUrl = streamUrl.trim();
+                    if (streamUrl.contains("\n")) {
+                        streamUrl = streamUrl.split("\n")[0].trim();
+                    }
+                }
+
+                if (streamUrl != null && !streamUrl.isEmpty()) {
+                    final String finalStreamUrl = streamUrl;
+                    mainHandler.post(() -> {
+                        MusicService service = activity.getMusicService();
+                        if (service != null) {
+                            service.play(finalStreamUrl, title, artist);
+                        }
+                        if (activity.getWebView() != null) {
+                            String js = String.format("javascript:window.onNativeStreamStarted('%s', '%s', '%s');",
+                                    title != null ? title.replace("'", "\\'") : "",
+                                    artist != null ? artist.replace("'", "\\'") : "",
+                                    coverUrl != null ? coverUrl.replace("'", "\\'") : "");
+                            activity.getWebView().evaluateJavascript(js, null);
+                        }
+                    });
+                } else {
+                    showToast("Não foi possível carregar áudio para streaming.");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                showToast("Erro ao iniciar áudio online: " + (e.getMessage() != null ? e.getMessage() : "indisponível"));
+            }
+        }).start();
+    }
+
+    @JavascriptInterface
     public String getClipboard() {
         try {
             android.content.ClipboardManager clipboard = (android.content.ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
