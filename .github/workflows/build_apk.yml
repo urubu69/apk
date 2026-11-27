@@ -60,16 +60,16 @@ jobs:
       - name: Criar Release com Link Direto do APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.3
-          name: "SpotyLink v1.0.3 (Busca Online com Pré-escuta e Streaming)"
+          tag_name: v1.0.4
+          name: "SpotyLink v1.0.4 (Correção Download SoundCloud e Fallback de Áudio)"
           body: |
-            🎵 **SpotyLink v1.0.3 para Android (Nativo)**
-            - 🔎 **Busca Online com Lista de Resultados**: Pesquise qualquer música ou artista diretamente no app!
-            - ▶ **Pré-escuta e Streaming Online**: Toque em `▶ Ouvir` para escutar qualquer música na hora sem precisar baixar nem ocupar espaço!
-            - 📥 **Download Opcional**: Toque em `📥 Baixar` apenas nas faixas que deseja salvar para ouvir offline.
-            - 🔗 **Suporte Completo a Links**: Cole links do SoundCloud, YouTube, YouTube Music ou pesquise por texto.
-            - 📁 **Importação de MP3**: Adicione músicas já salvas no celular.
-            - 🔒 **Toca em Segundo Plano**: Continua tocando com a tela bloqueada ou enquanto você usa outros aplicativos.
+            🎵 **SpotyLink v1.0.4 para Android (Nativo)**
+            - 🛠️ **Correção SoundCloud**: Suporte total a links móveis (`m.soundcloud.com`) e remoção automática de parâmetros de sistema (`in_system_playlist`).
+            - 🚀 **Fallback de Áudio Resiliente**: Se a conversão pós-processamento falhar, o app preserva e reproduz diretamente o formato nativo (`AAC / M4A`, `MP3`), garantindo que nenhum download seja perdido.
+            - 🔎 **Busca Online e Streaming**: Pesquisa por músicas/artistas com pré-escuta (`▶ Ouvir`) sem precisar baixar.
+            - 📥 **Download Offline**: Botão dedicado para salvar na biblioteca.
+            - 📁 **Importação de MP3 do Celular**.
+            - 🔒 **Toca em Segundo Plano** com tela bloqueada.
             
             👉 **Clique em `SpotyLink.apk` abaixo para baixar e atualizar no seu celular!**
           files: SpotyLink.apk

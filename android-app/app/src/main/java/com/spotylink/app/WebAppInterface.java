@@ -171,6 +171,7 @@ public class WebAppInterface {
                 try {
                     com.yausername.youtubedl_android.YoutubeDLRequest infoRequest =
                             new com.yausername.youtubedl_android.YoutubeDLRequest(cleanUrl);
+                    infoRequest.addOption("--no-playlist");
                     com.yausername.youtubedl_android.mapper.VideoInfo info =
                             com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(infoRequest);
                     if (info != null) {
@@ -189,22 +190,55 @@ public class WebAppInterface {
                 com.yausername.youtubedl_android.YoutubeDLRequest request =
                         new com.yausername.youtubedl_android.YoutubeDLRequest(cleanUrl);
 
-                request.addOption("--extract-audio");
+                request.addOption("-x");
                 request.addOption("--audio-format", "mp3");
                 request.addOption("--audio-quality", "0");
                 request.addOption("--no-playlist");
                 request.addOption("-o", new File(dir, trackId + ".%(ext)s").getAbsolutePath());
 
                 // Executa download e conversão nativa
-                com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(request);
+                try {
+                    com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(request);
+                } catch (Exception execErr) {
+                    execErr.printStackTrace();
+                }
 
                 File finalFile = null;
                 if (destFile.exists() && destFile.length() > 0) {
                     finalFile = destFile;
                 } else {
                     File[] matching = dir.listFiles((d, name) -> name.startsWith(trackId));
-                    if (matching != null && matching.length > 0 && matching[0].length() > 0) {
-                        finalFile = matching[0];
+                    if (matching != null && matching.length > 0) {
+                        for (File f : matching) {
+                            if (f.length() > 0 && !f.getName().endsWith(".part") && !f.getName().endsWith(".ytdl")) {
+                                finalFile = f;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Se o download/conversão falhou (ex: ffmpeg), tenta o fallback direto sem reencodificação
+                if (finalFile == null) {
+                    try {
+                        com.yausername.youtubedl_android.YoutubeDLRequest fallback =
+                                new com.yausername.youtubedl_android.YoutubeDLRequest(cleanUrl);
+                        fallback.addOption("-f", "bestaudio/best");
+                        fallback.addOption("--no-playlist");
+                        fallback.addOption("-o", new File(dir, trackId + ".%(ext)s").getAbsolutePath());
+                        com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(fallback);
+                    } catch (Exception fbErr) {
+                        fbErr.printStackTrace();
+                    }
+
+                    File[] matching = dir.listFiles((d, name) -> name.startsWith(trackId));
+                    if (matching != null && matching.length > 0) {
+                        for (File f : matching) {
+                            if (f.length() > 0 && !f.getName().endsWith(".part") && !f.getName().endsWith(".ytdl")) {
+                                finalFile = f;
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -410,11 +444,23 @@ public class WebAppInterface {
         } else if (!s.startsWith("http://") && !s.startsWith("https://")) {
             return "ytsearch1:" + s;
         }
+
+        // Limpeza de URLs do YouTube
         if (s.contains("youtube.com") || s.contains("youtu.be")) {
             s = s.replaceAll("m\\.youtube\\.com", "youtube.com");
             s = s.replaceAll("youtube\\.com/shorts/", "youtube.com/watch?v=");
             s = s.replaceAll("[?&]si=[^&]+", "");
+            s = s.replaceAll("[?&]list=[^&]+", "");
         }
+
+        // Limpeza de URLs do SoundCloud (remove m. e query parameters como in_system_playlist)
+        if (s.contains("soundcloud.com")) {
+            s = s.replaceAll("m\\.soundcloud\\.com", "soundcloud.com");
+            if (s.contains("?")) {
+                s = s.substring(0, s.indexOf('?'));
+            }
+        }
+
         return s;
     }
 }
